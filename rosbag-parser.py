@@ -3,11 +3,12 @@ import numpy as np
 import tkinter as tk
 import math
 from matplotlib import pyplot as plt
+import os
 
 def parseData(path): #This function is far from optimized and will be polished later, is functional at the moment
 
     #Read in data file (.txt format, see Sample Data.txt for reference)
-    file = open(path, "r")
+    file = open(os.getcwd()+"\\CIGITI\\"+path, "r")
     data = file.read().split('\n')
 
     #Collect lines from txt file, remove unnecessary whitespaces
@@ -93,7 +94,32 @@ def plotData(dataset):
     plt.title("Pitch Yaw and Roll Over Time")
     plt.show()
 
+def getval(dataset, time):
+    i = 0
+    while dataset["Time (s)"][i] < time:
+        i +=1
+    print("Timestamp: %f\nX position: %f\nY position: %f\nZ position: %f\nPitch: %f\nRoll: %f\nYaw: %f\n"%(dataset["Time (s)"][i], dataset["X position"][i],dataset["Y position"][i],dataset["Z position"][i],dataset["Pitch"][i], dataset["Roll"][i], dataset["Yaw"][i]))
+
 if __name__ == "__main__":
-    data = parseData("Sample Data.txt")
-    processeddata = processData(data)
-    plotData(processeddata)
+    filename = ''
+    while True:
+
+
+        if filename != '':
+            curfunction = input("\nEnter 'plot' to plot data or view to enter a timestamp. Enter 'exit' to exit or 'newfile' to enter a new filename.\n")
+            if curfunction == 'newfile':
+                filename = ''
+            elif curfunction == 'plot':
+                plotData(processeddata)
+            elif curfunction == 'view':
+                timestamp = float(input('\nEnter a timestamp:\n'))
+                getval(processeddata, timestamp)
+            elif curfunction == 'exit':
+                break
+            else:
+                print("\nNo function or invalid function entered!\n")
+        else:
+            filename = input("Input File Name:\n")
+            data = parseData(filename)
+            processeddata = processData(data)
+
