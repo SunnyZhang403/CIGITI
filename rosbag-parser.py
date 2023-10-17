@@ -5,9 +5,11 @@ import math
 from matplotlib import pyplot as plt
 import os
 
-def parseData(path): #This function is far from optimized and will be polished later, is functional at the moment
+def parseData(path): #This function is far from optimized and will be polished later, 
+                     #is functional at the moment
 
-    #Read in data file (.txt format, see Sample Data.txt for reference)
+    #Read in data file (.txt format, see Sample Data.txt for reference). Pathing may need adjusting
+    #according to user's directories, should path to directory containing txt file + path
     file = open(os.getcwd()+"\\CIGITI\\"+path, "r")
     data = file.read().split('\n')
 
@@ -51,6 +53,7 @@ def parseData(path): #This function is far from optimized and will be polished l
 
 
 def processData(dataset):
+    #Create Arrays for Each Set of Data
     timestamp = []
     xpos = []
     ypos = []
@@ -58,23 +61,31 @@ def processData(dataset):
     pitch = []
     roll = []
     yaw = []
+    # Convert DataFrame to Numpy array for easier iteration (DataFrame is good for publishing
+    # to Excel or viewing). Additional data values can be added to processed data later,
+    # currently just orientation and position
     npd = pd.DataFrame.to_numpy(dataset)
     for row in npd:
+        # Convert position from arrays to singular float values, set time to 0 at beginning 
+        # of simulation
         timestamp.append(row[0] - npd[0][0])
         xpos.append(row[2][0])
         ypos.append(row[2][1])
         zpos.append(row[2][2])
-        # print(row[1])
+        # Convert quaternion to pitch, roll, yaw
         yaw.append(math.atan2(2*(row[3][3]*row[3][0]+row[3][1]*row[3][2]),1-2*(row[3][0]**2+row[3][1]**2)))
         pitch.append(-math.pi/2 + math.atan2(math.sqrt(1+2*(row[3][3]*row[3][1]-row[3][0]*row[3][2])),math.sqrt(1-2*(row[3][3]*row[3][1]-row[3][0]*row[3][2]))))
         roll.append(math.atan2(2*(row[3][3]*row[3][2]+row[3][1]*row[3][0]),1-2*(row[3][2]**2+row[3][1]**2)))
+    
+    # Put together processed data and send to DataFrame
     fdata = [timestamp, xpos, ypos, zpos, pitch, yaw, roll]
     df1 = pd.DataFrame(fdata)
     df2 = pd.DataFrame.transpose(df1)
     df2.columns = ["Time (s)", "X position", "Y position", "Z position", "Pitch", "Yaw", "Roll"]
     return df2
         
-def plotData(dataset):
+def plotData(processeddata):
+    # Plot Position Data
     plt.plot(processeddata["Time (s)"], processeddata["X position"], label = "X position")
     plt.plot(processeddata["Time (s)"], processeddata["Y position"], label = "Y position")
     plt.plot(processeddata["Time (s)"], processeddata["Z position"], label = "Z position")
@@ -84,7 +95,7 @@ def plotData(dataset):
     plt.title("X, Y, and Z Position")
     plt.show()
 
-    
+    # Plot Angles Data
     plt.plot(processeddata["Time (s)"], processeddata["Pitch"], label = "Pitch")
     plt.plot(processeddata["Time (s)"], processeddata["Yaw"], label = "Yaw")
     plt.plot(processeddata["Time (s)"], processeddata["Roll"], label = "Roll")
@@ -96,6 +107,7 @@ def plotData(dataset):
 
 def getval(dataset, time):
     i = 0
+    # Find greatest timestamp less than the requested timestamp
     while dataset["Time (s)"][i] < time:
         i +=1
     print("Timestamp: %f\nX position: %f\nY position: %f\nZ position: %f\nPitch: %f\nRoll: %f\nYaw: %f\n"%(dataset["Time (s)"][i], dataset["X position"][i],dataset["Y position"][i],dataset["Z position"][i],dataset["Pitch"][i], dataset["Roll"][i], dataset["Yaw"][i]))
@@ -103,8 +115,7 @@ def getval(dataset, time):
 if __name__ == "__main__":
     filename = ''
     while True:
-
-
+        # If filename already entered in this iteration of the loop
         if filename != '':
             curfunction = input("\nEnter 'plot' to plot data or view to enter a timestamp. Enter 'exit' to exit or 'newfile' to enter a new filename.\n")
             if curfunction == 'newfile':
@@ -118,6 +129,7 @@ if __name__ == "__main__":
                 break
             else:
                 print("\nNo function or invalid function entered!\n")
+        #Entering filename
         else:
             filename = input("Input File Name:\n")
             data = parseData(filename)
